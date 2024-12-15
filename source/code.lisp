@@ -35,6 +35,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     :initarg :tail
     :accessor tail)))
 
+(defmacro with-locked-queue ((queue) &body body)
+  `(bt2:with-lock-held ((lock ,queue))
+     ,@body))
+
 (defmethod print-object ((object queue) stream)
   (print-unreadable-object (object stream)
     (princ (head object) stream)))
@@ -64,39 +68,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   nil)
 
 (defun queue-push! (queue value)
-  (bt2:with-lock-held ((lock queue))
+  (with-locked-queue (queue)
     (queue-push/no-lock! queue value))
   nil)
 
 (defun queue-pop/no-lock! (queue)
   (let ((node (head queue)))
-      (if node
-          (multiple-value-prog1 (values (car node) t)
-            (when (null (setf (head queue) (cdr node)))
-              (setf (tail queue) nil))
-            (setf (car node) nil
-                  (cdr node) nil))
-          (values nil nil))))
+    (if node
+        (multiple-value-prog1 (values (car node) t)
+          (when (null (setf (head queue) (cdr node)))
+            (setf (tail queue) nil))
+          (setf (car node) nil
+                (cdr node) nil))
+        (values nil nil))))
 
 (defun queue-pop! (queue)
-  (bt2:with-lock-held ((lock queue))
+  (with-locked-queue (queue)
     (queue-pop/no-lock! queue)))
 
 (defun blocking-queue-pop! (queue)
-  (bt2:with-lock-held ((lock queue))
+  (with-locked-queue (queue)
     (iterate
       (for (values value found) = (queue-pop/no-lock! queue))
       (when found (return-from blocking-queue-pop! value))
       (bt2:condition-wait (cvar queue) (lock queue)))))
 
 (defun blocking-queue-push! (queue value)
-  (bt2:with-lock-held ((lock queue))
+  (with-locked-queue (queue)
     (queue-push/no-lock! queue value)
     (bt2:condition-notify (cvar queue))))
-
-(defmacro with-locked-queue ((queue) &body body)
-  `(bt2:with-lock-held ((lock ,queue))
-     ,@body))
 
 (defun queue-filter/no-lock! (queue function)
   (bind (((:accessors head tail) queue))
