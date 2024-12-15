@@ -99,12 +99,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     (queue-push/no-lock! queue value)
     (bt2:condition-notify (cvar queue))))
 
-(defun queue-filter/no-lock! (queue function)
+(defun queue-filter/no-lock! (queue function &key (key #'identity))
   (bind (((:accessors head tail) queue))
     (iterate
       (with p-cell = nil)
       (for cell on (head queue))
-      (for content = (car cell))
+      (for content = (funcall key (car cell)))
       (for keep? = (funcall function content))
       (if keep?
           (setf p-cell cell)
@@ -116,6 +116,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
               (setf tail p-cell))))))
   queue)
 
-(defun queue-filter! (queue function)
+(defun queue-filter! (queue function &key (key #'identity))
   (with-locked-queue (queue)
-    (queue-filter/no-lock! queue function)))
+    (queue-filter/no-lock! queue function :key key)))
