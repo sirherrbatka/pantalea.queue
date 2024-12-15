@@ -108,10 +108,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       (if keep?
           (setf p-cell cell)
           (progn
-            (when (eq cell head)
-              (setf head (cdr head)))
-            (unless (null p-cell)
-              (setf (cdr p-cell) (cdr cell)))
+            (if (null p-cell)
+                (setf head (cdr cell))
+                (setf (cdr p-cell) (cdr cell)))
             (when (eq cell tail)
               (setf tail p-cell))))))
   queue)
