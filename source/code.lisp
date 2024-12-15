@@ -40,8 +40,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
      ,@body))
 
 (defmethod print-object ((object queue) stream)
-  (print-unreadable-object (object stream)
-    (princ (head object) stream)))
+  (with-locked-queue (object)
+    (print-unreadable-object (object stream)
+      (princ (head object) stream))))
 
 (defclass blocking-queue (queue)
   ((%cvar
