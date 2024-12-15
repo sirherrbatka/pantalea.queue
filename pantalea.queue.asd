@@ -1,6 +1,6 @@
 (asdf:defsystem #:pantalea.queue
   :name "queue"
-  :depends-on (#:bordeaux-threads #:log4cl)
+  :depends-on (#:bordeaux-threads #:metabang.bind)
   :serial T
   :pathname "source"
   :components ((:file "package")
