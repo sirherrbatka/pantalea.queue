@@ -1,5 +1,5 @@
 (cl:defpackage #:pantalea.queue
-  (:use #:common-lisp)
+  (:use #:common-lisp #:iterate)
   (:import-from #:metabang.bind
                 #:bind)
   (:local-nicknames)
