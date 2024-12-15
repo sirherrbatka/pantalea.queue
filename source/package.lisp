@@ -10,5 +10,7 @@
    #:queue-push!
    #:lock
    #:queue-pop!
+   #:queue-filter!
+   #:queue-filter/no-lock!
    #:blocking-queue-push!
    #:blocking-queue-pop!))

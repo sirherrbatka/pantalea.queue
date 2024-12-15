@@ -94,6 +94,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     (queue-push/no-lock! queue value)
     (bt2:condition-notify (cvar queue))))
 
-(defmacro with-locked-queue ((queue) &rest body)
+(defmacro with-locked-queue ((queue) &body body)
   `(bt2:with-lock-held ((lock ,queue))
      ,@body))
+
+(defun queue-filter/no-lock! (queue function)
+  (bind (((:accessors head tail) queue))
+    (iterate
+      (with p-cell = nil)
+      (for cell on (head queue))
+      (for content = (car cell))
+      (for keep? = (funcall function content))
+      (if keep?
+          (setf p-cell cell)
+          (progn
+            (when (eq cell head)
+              (setf head (cdr head)))
+            (unless (null p-cell)
+              (setf (cdr p-cell) (cdr cell)))
+            (when (eq cell tail)
+              (setf tail p-cell))))))
+  queue)
+
+(defun queue-filter! (queue function)
+  (with-locked-queue (queue)
+    (queue-filter/no-lock! queue function)))
